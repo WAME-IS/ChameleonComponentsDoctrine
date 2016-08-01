@@ -1,0 +1,22 @@
+{
+    "name": "wame/ChameleonComponentsDoctrine",
+    "version": "0.0.1",
+    "description": "ChameleonComponentsDoctrine",
+    "homepage": "http://wame.sk/cms-wame-admin",
+    "authors": [
+        {
+            "name": "Wame",
+            "homepage": "http://wame.sk"
+        }
+    ],
+    "require": {
+        "wame/ChameleonComponents": "*",
+        "wame/Core": "*"
+    },
+    "autoload": {
+        "classmap": [
+            "."
+        ]
+    },
+    "type": "wame-module"
+}

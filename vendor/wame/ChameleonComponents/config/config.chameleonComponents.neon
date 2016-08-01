@@ -1,0 +1,13 @@
+services:
+
+    - Wame\ChameleonComponentsDoctrine\Loader\DoctrineRelationLoader
+
+    # Registers
+    RelationsRegister:
+        class: Wame\ChameleonComponents\Drivers\DoctrineRepository\RelationsRegister
+        setup:
+            - @Wame\ChameleonComponentsDoctrine\Loader\DoctrineRelationLoader::initialize(@RelationsRegister)
+
+    DataLoaderDriverRegister:
+        setup:
+            - Wame\ChameleonComponents\Drivers\DoctrineRepository\RepositoryDataLoaderDriver
