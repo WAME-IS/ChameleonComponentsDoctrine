@@ -16,13 +16,17 @@ class SimpleDoctrineRelation implements IRelation
     private $to;
 
     /** @var string */
-    private $fieldName;
-    
-    public function __construct(DataDefinitionTarget $from, DataDefinitionTarget $to, $fieldName)
+    private $fromField;
+
+    /** @var string */
+    private $toField;
+
+    public function __construct(DataDefinitionTarget $from, $fromField, DataDefinitionTarget $to, $toField)
     {
         $this->from = $from;
         $this->to = $to;
-        $this->fieldName = $fieldName;
+        $this->fromField = $fromField;
+        $this->toField = $toField;
     }
 
     /**
@@ -47,14 +51,14 @@ class SimpleDoctrineRelation implements IRelation
     public function apply($qb)
     {
         $type = $this->to->getType();
-        $alias = $this->generateAlias($type);
-        $qb->innerJoin($type, $alias);
-        $qb->where(\Doctrine\Common\Collections\Criteria::expr()->eq($alias.".".$this->fieldName, $this->getRelationValue()));
-    }
-    
-    private function getRelationValue()
-    {
-        // TODO :D
+
+        dump($qb->getRootAliases());
+
+        $fromAlias = $qb->getRootAliases()[0];
+        $toAlias = $this->generateAlias($type);
+
+        $qb->innerJoin($type, $toAlias);
+        $qb->where($fromAlias . "." . $this->fromField . ' = ' . $toAlias . "." . $this->toField);
     }
 
     /**

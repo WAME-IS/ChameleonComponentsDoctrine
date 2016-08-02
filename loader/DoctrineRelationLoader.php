@@ -41,9 +41,9 @@ class DoctrineRelationLoader
 
             list($manySource, $manyTarget) = $this->loadAssociationCardinality($association['type']);
 
-            $relationsRegister->add(new DoctrineRelation(
-                new DataDefinitionTarget($association['sourceEntity'], $manySource), new DataDefinitionTarget($association['targetEntity'], $manyTarget),
-                $association['fieldName']
+            $relationsRegister->add(new SimpleDoctrineRelation(
+                new DataDefinitionTarget($association['sourceEntity'], $manySource), $association['fieldName'],
+                new DataDefinitionTarget($association['targetEntity'], $manyTarget), $association['mappedBy']
             ));
         }
     }
