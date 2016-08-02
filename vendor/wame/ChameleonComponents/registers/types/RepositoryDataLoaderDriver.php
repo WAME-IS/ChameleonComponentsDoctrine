@@ -3,12 +3,13 @@
 namespace Wame\ChameleonComponents\Drivers\DoctrineRepository;
 
 use Kdyby\Doctrine\EntityManager;
-use Kdyby\Doctrine\QueryBuilder;
 use Nette\InvalidArgumentException;
 use Wame\ChameleonComponents\Definition\DataDefinition;
 use Wame\ChameleonComponents\Definition\DataSpace;
+use Wame\ChameleonComponents\Drivers\DoctrineRepository\RelationsRegister;
 use Wame\ChameleonComponents\IDataLoaderDriver;
 use Wame\Core\Registers\RepositoryRegister;
+use Wame\ListControlModule\Models\QueryBuilder;
 
 /**
  * @author Dominik Gmiterko <ienze@ienze.me>
@@ -19,17 +20,17 @@ class RepositoryDataLoaderDriver implements IDataLoaderDriver
     /** @var RepositoryRegister */
     private $repositoryRegister;
 
-    /** @var RelationFinder */
-    private $relationFinder;
+    /** @var RelationsRegister */
+    private $relationsRegister;
 
     /** @var EntityManager */
     private $em;
 
-    public function __construct(RepositoryRegister $repositoryRegister, RelationFinder $relationFinder, EntityManager $em)
+    public function __construct(RepositoryRegister $repositoryRegister, RelationsRegister $relationsRegister, EntityManager $em)
     {
         $this->repositoryRegister = $repositoryRegister;
         dump($this->repositoryRegister->getAll());
-        $this->relationFinder = $relationFinder;
+        $this->relationsRegister = $relationsRegister;
         $this->em = $em;
     }
 
@@ -67,7 +68,7 @@ class RepositoryDataLoaderDriver implements IDataLoaderDriver
      * @param QueryBuilder $qb
      */
     private function buildQuery($dataDefinition, $qb)
-    {   
+    {
         $target = $dataDefinition->getTarget();
 
         $qb->where($dataDefinition->getKnownProperties());
@@ -84,7 +85,7 @@ class RepositoryDataLoaderDriver implements IDataLoaderDriver
     public function addRelations($dataSpace, $qb)
     {
         while ($parent = $dataSpace->getParent()) {
-            $relation = $this->relationFinder->findRelation($dataSpace->getDataDefinition()->getTarget(), $parent->getDataDefinition()->getTarget());
+            $relation = $this->relationsRegister->getByTarget($dataSpace->getDataDefinition()->getTarget(), $parent->getDataDefinition()->getTarget());
             $relation->apply($qb);
         }
     }
