@@ -28,6 +28,7 @@ class RepositoryDataLoaderDriver implements IDataLoaderDriver
     public function __construct(RepositoryRegister $repositoryRegister, RelationFinder $relationFinder, EntityManager $em)
     {
         $this->repositoryRegister = $repositoryRegister;
+        dump($this->repositoryRegister->getAll());
         $this->relationFinder = $relationFinder;
         $this->em = $em;
     }

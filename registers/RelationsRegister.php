@@ -57,9 +57,15 @@ class RelationsRegister implements IRegister
      */
     public function remove($relation)
     {
+        if (is_string($relation)) {
+            $relation = array_search($relation, $this->relationsNames);
+        }
+
         $sd = $this->getServiceDefinition($relation);
+        $name = $sd->name;
         $sd->name = null;
         $sd->relation = null;
+        unset($this->relationsNames[$name]);
     }
 
     /**
@@ -129,5 +135,30 @@ class RelationsRegister implements IRegister
         $sd = $arr[$to->getType()];
 
         return $sd;
+    }
+
+    public function getIterator()
+    {
+        return new \ArrayIterator($this->relationsNames);
+    }
+
+    public function offsetExists($offset)
+    {
+        return isset($this->relationsNames[$offset]);
+    }
+
+    public function offsetGet($offset)
+    {
+        return $this->relationsNames[$offset];
+    }
+
+    public function offsetSet($name, $relation)
+    {
+        $this->add($relation, $name);
+    }
+
+    public function offsetUnset($offset)
+    {
+        $this->remove($offset);
     }
 }
