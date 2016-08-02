@@ -12,10 +12,10 @@ class RelationsRegister implements IRegister
 {
 
     /** @var array */
-    private $relations;
+    private $relations = [];
 
     /** @var array */
-    private $relationsNames;
+    private $relationsNames = [];
 
     public function __construct()
     {
@@ -34,7 +34,7 @@ class RelationsRegister implements IRegister
             throw new InvalidArgumentException("Invalid type, has to be IRelation.");
         }
 
-        $sd = $this->getServiceDefinition($relation);
+        $sd = $this->getServiceDefinition($relation->getFrom(), $relation->getTo());
 
         if ($sd->name) {
             throw new InvalidArgumentException("Relation for types {$relation->getFrom()->getType()}({$relation->getFrom()->isList()}) and {$relation->getTo()->getType()}({$relation->getTo()->isList()}) is already defined.");
@@ -61,7 +61,7 @@ class RelationsRegister implements IRegister
             $relation = array_search($relation, $this->relationsNames);
         }
 
-        $sd = $this->getServiceDefinition($relation);
+        $sd = $this->getServiceDefinition($relation->getFrom(), $relation->getTo());
         $name = $sd->name;
         $sd->name = null;
         $sd->relation = null;
@@ -114,15 +114,14 @@ class RelationsRegister implements IRegister
     {
         $arr = $this->relations;
 
-        if (!array_key_exists($from->isList(), $arr)) {
-            $arr[$from->isList()] = [];
+        $key1 = 0;
+        $key1 += $from->isList() ? 1 : 0;
+        $key1 += $to->isList() ? 2 : 0;
+        
+        if (!array_key_exists($key1, $arr)) {
+            $arr[$key1] = [];
         }
-        $arr = $arr[$from->isList()];
-
-        if (!array_key_exists($to->isList(), $arr)) {
-            $arr[$to->isList()] = [];
-        }
-        $arr = $arr[$to->isList()];
+        $arr = $arr[$key1];
 
         if (!array_key_exists($from->getType(), $arr)) {
             $arr[$from->getType()] = [];
@@ -130,7 +129,10 @@ class RelationsRegister implements IRegister
         $arr = $arr[$from->getType()];
 
         if (!array_key_exists($to->getType(), $arr)) {
-            $arr[$to->getType()] = new stdClass();
+            $o = new stdClass();
+            $o->name = null;
+            $o->relation = null;
+            $arr[$to->getType()] = $o;
         }
         $sd = $arr[$to->getType()];
 

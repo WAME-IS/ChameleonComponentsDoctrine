@@ -7,7 +7,8 @@ use Kdyby\Doctrine\EntityManager;
 use Nette\DI\Container;
 use Wame\ChameleonComponents\Definition\DataDefinitionTarget;
 use Wame\ChameleonComponents\Drivers\DoctrineRepository\RelationsRegister;
-use Wame\ChameleonComponentsDoctrine\Registers\Types\DoctrineRelation;
+use Wame\ChameleonComponentsDoctrine\Registers\Types\SimpleDoctrineRelation;
+use Wame\ComponentModule\Forms\Position\ContainerFormContainer;
 use Wame\Core\Repositories\BaseRepository;
 
 class DoctrineRelationLoader
@@ -36,14 +37,20 @@ class DoctrineRelationLoader
 
     private function loadFromRepository(BaseRepository $repository, RelationsRegister $relationsRegister)
     {
+        
+        if(!$repository->getEntityName()) {
+            $e = new \Nette\InvalidStateException("Repository doesnt have entity set.");
+            $e->repository = $repository;
+            return $e;
+        }
+        
         $metadata = $this->em->getClassMetadata($repository->getEntityName());
         foreach ($metadata->getAssociationMappings() as $association) {
 
             list($manySource, $manyTarget) = $this->loadAssociationCardinality($association['type']);
 
             $relationsRegister->add(new SimpleDoctrineRelation(
-                new DataDefinitionTarget($association['sourceEntity'], $manySource), $association['fieldName'],
-                new DataDefinitionTarget($association['targetEntity'], $manyTarget), $association['mappedBy']
+                new DataDefinitionTarget($association['sourceEntity'], $manySource), $association['fieldName'], new DataDefinitionTarget($association['targetEntity'], $manyTarget), $association['mappedBy']
             ));
         }
     }

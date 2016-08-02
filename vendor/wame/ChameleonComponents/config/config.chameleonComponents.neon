@@ -7,9 +7,6 @@ services:
         setup:
             - @Wame\ChameleonComponentsDoctrine\Loader\DoctrineRelationLoader::initialize(@RelationsRegister)
 
-# TODO remove
-    - {class: Wame\ChameleonComponents\Drivers\DoctrineRepository\RepositoryDataLoaderDriver, tags: [run]}
-
     DataLoaderDriverRegister:
         setup:
             - add(Wame\ChameleonComponents\Drivers\DoctrineRepository\RepositoryDataLoaderDriver())

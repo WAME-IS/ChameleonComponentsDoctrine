@@ -14,7 +14,7 @@ use Wame\ListControlModule\Models\QueryBuilder;
 /**
  * @author Dominik Gmiterko <ienze@ienze.me>
  */
-class RepositoryDataLoaderDriver implements IDataLoaderDriver
+class DoctrineDataLoaderDriver implements IDataLoaderDriver
 {
 
     /** @var RepositoryRegister */
@@ -29,7 +29,6 @@ class RepositoryDataLoaderDriver implements IDataLoaderDriver
     public function __construct(RepositoryRegister $repositoryRegister, RelationsRegister $relationsRegister, EntityManager $em)
     {
         $this->repositoryRegister = $repositoryRegister;
-        dump($this->repositoryRegister->getAll());
         $this->relationsRegister = $relationsRegister;
         $this->em = $em;
     }
