@@ -9,4 +9,4 @@ services:
 
     DataLoaderDriverRegister:
         setup:
-            - add(Wame\ChameleonComponents\Drivers\DoctrineRepository\RepositoryDataLoaderDriver())
+            - add(Wame\ChameleonComponents\Drivers\DoctrineRepository\DoctrineDataLoaderDriver())
