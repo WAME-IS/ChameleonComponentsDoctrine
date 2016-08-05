@@ -52,6 +52,8 @@ class DoctrineDataLoaderDriver implements IDataLoaderDriver
             $this->addRelations($dataSpace, $qb);
 
             $dql = $qb->getDQL();
+            
+            \Tracy\Debugger::barDump($dql);
 
             return function() use ($dql) {
                 return $this->em->createQuery($dql)->execute();
