@@ -3,7 +3,9 @@
 namespace Wame\ChameleonComponents\Drivers\DoctrineRepository;
 
 use Kdyby\Doctrine\EntityManager;
+use Kdyby\Doctrine\QueryBuilder as QueryBuilder2;
 use Nette\InvalidArgumentException;
+use Tracy\Debugger;
 use Wame\ChameleonComponents\Definition\DataDefinition;
 use Wame\ChameleonComponents\Definition\DataSpace;
 use Wame\ChameleonComponents\Drivers\DoctrineRepository\RelationsRegister;
@@ -51,12 +53,10 @@ class DoctrineDataLoaderDriver implements IDataLoaderDriver
             $this->buildQuery($dataDefinition, $qb);
             $this->addRelations($dataSpace, $qb);
 
-            $dql = $qb->getDQL();
-            
-            \Tracy\Debugger::barDump($dql);
+            $query = $qb->getQuery();
 
-            return function() use ($dql) {
-                return $this->em->createQuery($dql)->execute();
+            return function() use ($query) {
+                return $query->execute();
             };
         } else {
             throw new InvalidArgumentException("Couldn't find repository for entity named $entityName");
@@ -66,13 +66,15 @@ class DoctrineDataLoaderDriver implements IDataLoaderDriver
     /**
      * 
      * @param DataDefinition $dataDefinition
-     * @param QueryBuilder $qb
+     * @param QueryBuilder2 $qb
      */
     private function buildQuery($dataDefinition, $qb)
     {
         $target = $dataDefinition->getTarget();
 
-        $qb->where($dataDefinition->getKnownProperties());
+        if ($dataDefinition->getKnownProperties()) {
+            $qb->addCriteria($dataDefinition->getKnownProperties());
+        }
 
         if (!$target->isList()) {
             $qb->setMaxResults(1);
