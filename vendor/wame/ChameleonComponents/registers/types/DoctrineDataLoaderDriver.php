@@ -3,15 +3,13 @@
 namespace Wame\ChameleonComponents\Drivers\DoctrineRepository;
 
 use Kdyby\Doctrine\EntityManager;
-use Kdyby\Doctrine\QueryBuilder as QueryBuilder2;
+use Kdyby\Doctrine\QueryBuilder;
 use Nette\InvalidArgumentException;
-use Tracy\Debugger;
 use Wame\ChameleonComponents\Definition\DataDefinition;
 use Wame\ChameleonComponents\Definition\DataSpace;
 use Wame\ChameleonComponents\Drivers\DoctrineRepository\RelationsRegister;
 use Wame\ChameleonComponents\IDataLoaderDriver;
 use Wame\Core\Registers\RepositoryRegister;
-use Wame\ListControlModule\Models\QueryBuilder;
 
 /**
  * @author Dominik Gmiterko <ienze@ienze.me>
@@ -55,9 +53,15 @@ class DoctrineDataLoaderDriver implements IDataLoaderDriver
 
             $query = $qb->getQuery();
 
-            return function() use ($query) {
-                return $query->execute();
-            };
+            if ($dataDefinition->getTarget()->isList()) {
+                return function() use ($query) {
+                    return $query->getResult();
+                };
+            } else {
+                return function() use ($query) {
+                    return $query->setMaxResults(1)->getSingleResult();
+                };
+            }
         } else {
             throw new InvalidArgumentException("Couldn't find repository for entity named $entityName");
         }
@@ -66,7 +70,7 @@ class DoctrineDataLoaderDriver implements IDataLoaderDriver
     /**
      * 
      * @param DataDefinition $dataDefinition
-     * @param QueryBuilder2 $qb
+     * @param QueryBuilder $qb
      */
     private function buildQuery($dataDefinition, $qb)
     {
