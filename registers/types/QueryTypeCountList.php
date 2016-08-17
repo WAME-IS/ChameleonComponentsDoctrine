@@ -32,7 +32,7 @@ class QueryTypeCountList implements IQueryType
         $selectDataSpace = $this->getSelectDataSpace($dataSpace);
         $qb = $this->queryTypeSelect->prepareQuery($selectDataSpace);
 
-        $qb->select($qb->expr()->count("id"));
+        $qb->select($qb->expr()->count($qb->getAllAliases()[0] . ".id"));
         $qb->setMaxResults(null);
         $qb->setFirstResult(null);
 
@@ -48,6 +48,9 @@ class QueryTypeCountList implements IQueryType
      */
     public function canPrepare($dataSpace)
     {
+        //TODO
+//        \Tracy\Debugger::barDump($dataSpace);
+//        \Tracy\Debugger::barDump($this->getSelectDataSpace($dataSpace));
         return boolval($this->getSelectDataSpace($dataSpace));
     }
 
