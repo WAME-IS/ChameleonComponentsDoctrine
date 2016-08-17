@@ -2,14 +2,10 @@
 
 namespace Wame\ChameleonComponents\Drivers\DoctrineRepository;
 
-use Kdyby\Doctrine\EntityManager;
-use Kdyby\Doctrine\QueryBuilder;
 use Nette\InvalidArgumentException;
-use Wame\ChameleonComponents\Definition\DataDefinition;
 use Wame\ChameleonComponents\Definition\DataSpace;
-use Wame\ChameleonComponents\Drivers\DoctrineRepository\RelationsRegister;
 use Wame\ChameleonComponents\IDataLoaderDriver;
-use Wame\Core\Registers\RepositoryRegister;
+use Wame\ChameleonComponentsDoctrine\Registers\Types\IQueryType;
 
 /**
  * @author Dominik Gmiterko <ienze@ienze.me>
@@ -17,20 +13,14 @@ use Wame\Core\Registers\RepositoryRegister;
 class DoctrineDataLoaderDriver implements IDataLoaderDriver
 {
 
-    /** @var RepositoryRegister */
-    private $repositoryRegister;
+    const DEFAULT_QUERY_TYPE = 'select';
 
-    /** @var RelationsRegister */
-    private $relationsRegister;
+    /** @var QueryTypesRegister */
+    private $queryTypesRegister;
 
-    /** @var EntityManager */
-    private $em;
-
-    public function __construct(RepositoryRegister $repositoryRegister, RelationsRegister $relationsRegister, EntityManager $em)
+    public function __construct(QueryTypesRegister $queryTypesRegister)
     {
-        $this->repositoryRegister = $repositoryRegister;
-        $this->relationsRegister = $relationsRegister;
-        $this->em = $em;
+        $this->queryTypesRegister = $queryTypesRegister;
     }
 
     /**
@@ -41,60 +31,7 @@ class DoctrineDataLoaderDriver implements IDataLoaderDriver
      */
     public function prepareCallback($dataSpace)
     {
-        $dataDefinition = $dataSpace->getDataDefinition();
-        $entityName = $dataDefinition->getTarget()->getType();
-        $repository = $this->repositoryRegister->getByName($entityName);
-        if ($repository) {
-
-            $qb = $repository->createQueryBuilder();
-
-            $this->buildQuery($dataDefinition, $qb);
-            $this->addRelations($dataSpace, $qb);
-
-            $query = $qb->getQuery();
-
-            if ($dataDefinition->getTarget()->isList()) {
-                return function() use ($query) {
-                    return $query->getResult();
-                };
-            } else {
-                return function() use ($query) {
-                    return $query->setMaxResults(1)->getSingleResult();
-                };
-            }
-        } else {
-            throw new InvalidArgumentException("Couldn't find repository for entity named $entityName");
-        }
-    }
-
-    /**
-     * 
-     * @param DataDefinition $dataDefinition
-     * @param QueryBuilder $qb
-     */
-    private function buildQuery($dataDefinition, $qb)
-    {
-        $target = $dataDefinition->getTarget();
-
-        if ($dataDefinition->getKnownProperties()) {
-            $qb->addCriteria($dataDefinition->getKnownProperties());
-        }
-
-        if (!$target->isList()) {
-            $qb->setMaxResults(1);
-        }
-    }
-
-    /**
-     * @param DataSpace $dataSpace
-     * @param QueryBuilder $qb
-     */
-    public function addRelations($dataSpace, $qb)
-    {
-        while ($parent = $dataSpace->getParent()) {
-            $relation = $this->relationsRegister->getByTarget($dataSpace->getDataDefinition()->getTarget(), $parent->getDataDefinition()->getTarget());
-            $relation->apply($qb);
-        }
+        return $this->getQueryType($dataSpace)->prepareCallback($dataSpace);
     }
 
     /**
@@ -105,7 +42,32 @@ class DoctrineDataLoaderDriver implements IDataLoaderDriver
      */
     public function canPrepare($dataSpace)
     {
+        return $this->getQueryType($dataSpace)->canPrepare($dataSpace);
+    }
+
+    /**
+     * Returns name of status used to store returned value
+     * 
+     * @param DataSpace $dataSpace
+     * @return string
+     */
+    public function getStatusName($dataSpace)
+    {
+        return $this->getQueryType($dataSpace)->getStatusName($dataSpace);
+    }
+
+    /**
+     * @param DataSpace $dataSpace
+     * @return IQueryType
+     * @throws InvalidArgumentException if corresponding query type is not found
+     */
+    private function getQueryType($dataSpace)
+    {
         $target = $dataSpace->getDataDefinition()->getTarget();
-        return boolval($this->repositoryRegister->getByName($target->getType()));
+        $queryType = $this->queryTypesRegister->getByName($target->getQueryType() ? : self::DEFAULT_QUERY_TYPE);
+        if (!$queryType) {
+            throw new InvalidArgumentException("Query type with name {$target->getQueryType()} isn't supported");
+        }
+        return $queryType;
     }
 }

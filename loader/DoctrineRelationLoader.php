@@ -5,10 +5,10 @@ namespace Wame\ChameleonComponentsDoctrine\Loader;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
 use Kdyby\Doctrine\EntityManager;
 use Nette\DI\Container;
+use Nette\InvalidStateException;
 use Wame\ChameleonComponents\Definition\DataDefinitionTarget;
 use Wame\ChameleonComponents\Drivers\DoctrineRepository\RelationsRegister;
 use Wame\ChameleonComponentsDoctrine\Registers\Types\SimpleDoctrineRelation;
-use Wame\ComponentModule\Forms\Position\ContainerFormContainer;
 use Wame\Core\Repositories\BaseRepository;
 
 class DoctrineRelationLoader
@@ -37,13 +37,12 @@ class DoctrineRelationLoader
 
     private function loadFromRepository(BaseRepository $repository, RelationsRegister $relationsRegister)
     {
-        
-        if(!$repository->getEntityName()) {
-            $e = new \Nette\InvalidStateException("Repository doesnt have entity set.");
+        if (!$repository->getEntityName()) {
+            $e = new InvalidStateException("Repository doesnt have entity set.");
             $e->repository = $repository;
             return $e;
         }
-        
+
         $metadata = $this->em->getClassMetadata($repository->getEntityName());
         foreach ($metadata->getAssociationMappings() as $association) {
 

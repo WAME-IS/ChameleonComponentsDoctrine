@@ -1,0 +1,18 @@
+services:
+    - Wame\ChameleonComponentsDoctrine\Loader\DoctrineRelationLoader
+
+    # Registers
+    RelationsRegister:
+        class: Wame\ChameleonComponents\Drivers\DoctrineRepository\RelationsRegister
+        setup:
+            - @Wame\ChameleonComponentsDoctrine\Loader\DoctrineRelationLoader::initialize(@RelationsRegister)
+
+
+    - Wame\ChameleonComponentsDoctrine\Registers\Types\QueryTypeSelect
+    - Wame\ChameleonComponentsDoctrine\Registers\Types\QueryTypeCountList
+
+    QueryTypesRegister:
+        class: Wame\ChameleonComponents\Drivers\DoctrineRepository\QueryTypesRegister
+        setup:
+            - add(@Wame\ChameleonComponentsDoctrine\Registers\Types\QueryTypeSelect, 'select')
+            - add(@Wame\ChameleonComponentsDoctrine\Registers\Types\QueryTypeCountList, 'countList')
