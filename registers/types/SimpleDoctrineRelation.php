@@ -52,8 +52,6 @@ class SimpleDoctrineRelation implements IRelation
     {
         $type = $this->to->getType();
 
-        dump($qb->getRootAliases());
-
         $fromAlias = $qb->getRootAliases()[0];
         $toAlias = $this->generateAlias($type);
 
