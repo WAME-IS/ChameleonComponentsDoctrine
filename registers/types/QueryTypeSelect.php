@@ -5,7 +5,7 @@ namespace Wame\ChameleonComponentsDoctrine\Registers\Types;
 use Kdyby\Doctrine\QueryBuilder;
 use Wame\ChameleonComponents\Definition\DataDefinition;
 use Wame\ChameleonComponents\Definition\DataSpace;
-use Wame\ChameleonComponents\Drivers\DoctrineRepository\RelationsRegister;
+use Wame\ChameleonComponentsDoctrine\Registers\RelationsRegister;
 use Wame\Core\Registers\RepositoryRegister;
 use WebLoader\InvalidArgumentException;
 
@@ -74,14 +74,6 @@ class QueryTypeSelect implements IQueryType
     }
 
     /**
-     * @param DataSpace $dataSpace
-     */
-    public function getStatusName($dataSpace)
-    {
-        return $dataSpace->getDataDefinition()->getTarget()->getStatusName();
-    }
-
-    /**
      * 
      * @param DataDefinition $dataDefinition
      * @param QueryBuilder $qb
@@ -107,7 +99,7 @@ class QueryTypeSelect implements IQueryType
     {
         while ($parent = $dataSpace->getParent()) {
             $relation = $this->relationsRegister->getByTarget($dataSpace->getDataDefinition()->getTarget(), $parent->getDataDefinition()->getTarget());
-            $relation->apply($qb);
+            $relation->apply($qb, $dataSpace, $parent);
         }
     }
 }

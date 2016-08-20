@@ -4,6 +4,7 @@ namespace Wame\ChameleonComponentsDoctrine\Registers\Types;
 
 use Kdyby\Doctrine\QueryBuilder;
 use Wame\ChameleonComponents\Definition\DataDefinitionTarget;
+use Wame\ChameleonComponents\Definition\DataSpace;
 
 interface IRelation
 {
@@ -20,6 +21,8 @@ interface IRelation
 
     /**
      * @param QueryBuilder $qb
+     * @param DataSpace $from
+     * @param DataSpace $to
      */
-    public function apply(QueryBuilder $qb);
+    public function apply(QueryBuilder $qb, $from, $to);
 }

@@ -1,10 +1,11 @@
 <?php
 
-namespace Wame\ChameleonComponents\Drivers\DoctrineRepository;
+namespace Wame\ChameleonComponentsDoctrine\Vendor\Wame\ChameleonComponents\Registers\Types;
 
 use Nette\InvalidArgumentException;
 use Wame\ChameleonComponents\Definition\DataSpace;
 use Wame\ChameleonComponents\IDataLoaderDriver;
+use Wame\ChameleonComponentsDoctrine\Registers\QueryTypesRegister;
 use Wame\ChameleonComponentsDoctrine\Registers\Types\IQueryType;
 
 /**
@@ -43,17 +44,6 @@ class DoctrineDataLoaderDriver implements IDataLoaderDriver
     public function canPrepare($dataSpace)
     {
         return $this->getQueryType($dataSpace)->canPrepare($dataSpace);
-    }
-
-    /**
-     * Returns name of status used to store returned value
-     * 
-     * @param DataSpace $dataSpace
-     * @return string
-     */
-    public function getStatusName($dataSpace)
-    {
-        return $this->getQueryType($dataSpace)->getStatusName($dataSpace);
     }
 
     /**

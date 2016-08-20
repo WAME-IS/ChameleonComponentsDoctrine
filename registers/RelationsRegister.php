@@ -1,6 +1,6 @@
 <?php
 
-namespace Wame\ChameleonComponents\Drivers\DoctrineRepository;
+namespace Wame\ChameleonComponentsDoctrine\Registers;
 
 use Nette\InvalidArgumentException;
 use stdClass;

@@ -48,18 +48,7 @@ class QueryTypeCountList implements IQueryType
      */
     public function canPrepare($dataSpace)
     {
-        //TODO
-//        \Tracy\Debugger::barDump($dataSpace);
-//        \Tracy\Debugger::barDump($this->getSelectDataSpace($dataSpace));
         return boolval($this->getSelectDataSpace($dataSpace));
-    }
-
-    /**
-     * @param DataSpace $dataSpace
-     */
-    public function getStatusName($dataSpace)
-    {
-        return $dataSpace->getDataDefinition()->getTarget()->getType() . '-' . self::STATUS_SUFFIX;
     }
 
     /**

@@ -48,7 +48,7 @@ class SimpleDoctrineRelation implements IRelation
     /**
      * @param QueryBuilder $qb
      */
-    public function apply(QueryBuilder $qb)
+    public function apply(QueryBuilder $qb, $from, $to)
     {
         $type = $this->to->getType();
 

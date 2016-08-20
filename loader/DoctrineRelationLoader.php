@@ -7,7 +7,7 @@ use Kdyby\Doctrine\EntityManager;
 use Nette\DI\Container;
 use Nette\InvalidStateException;
 use Wame\ChameleonComponents\Definition\DataDefinitionTarget;
-use Wame\ChameleonComponents\Drivers\DoctrineRepository\RelationsRegister;
+use Wame\ChameleonComponentsDoctrine\Registers\RelationsRegister;
 use Wame\ChameleonComponentsDoctrine\Registers\Types\SimpleDoctrineRelation;
 use Wame\Core\Repositories\BaseRepository;
 
