@@ -105,7 +105,7 @@ class RelationsRegister implements IRegister
 
         if ($relations) {
             if (count($relations) == 1) {
-                return $relations[0]->relation;
+                return $relations[0];
             } else {
 
                 if (!$hint) {
