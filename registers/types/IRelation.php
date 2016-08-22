@@ -25,4 +25,10 @@ interface IRelation
      * @param DataSpace $to
      */
     public function apply(QueryBuilder $qb, $from, $to);
+    
+    /**
+     * @param mixed $hint
+     * @return boolean
+     */
+    public function matchHint($hint);
 }

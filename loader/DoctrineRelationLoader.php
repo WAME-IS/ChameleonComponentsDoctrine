@@ -46,6 +46,10 @@ class DoctrineRelationLoader
         $metadata = $this->em->getClassMetadata($repository->getEntityName());
         foreach ($metadata->getAssociationMappings() as $association) {
 
+            if(!$association['isOwningSide']) {
+                continue;
+            }
+            
             list($manySource, $manyTarget) = $this->loadAssociationCardinality($association['type']);
 
             $relationsRegister->add(new SimpleDoctrineRelation(

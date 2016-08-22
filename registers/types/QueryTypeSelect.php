@@ -97,9 +97,23 @@ class QueryTypeSelect implements IQueryType
      */
     public function addRelations($dataSpace, $qb)
     {
-        while ($parent = $dataSpace->getParent()) {
-            $relation = $this->relationsRegister->getByTarget($dataSpace->getDataDefinition()->getTarget(), $parent->getDataDefinition()->getTarget());
-            $relation->apply($qb, $dataSpace, $parent);
+        $parent = $dataSpace;
+        while ($parent = $parent->getParent()) {
+            
+            $to = $parent->getDataDefinition()->getTarget();
+            
+            $relationHint = $dataSpace->getDataDefinition()->getHint('relation');
+            if(is_array($relationHint)) {
+                $relationHint = isset($relationHint[$to->getType()]) ? $relationHint[$to->getType()] : null;
+            } else {
+                $relationHint = null;
+            }
+            
+            $relation = $this->relationsRegister->getByTarget($dataSpace->getDataDefinition()->getTarget(), $to, $relationHint);
+            
+            if($relation) {
+                $relation->apply($qb, $dataSpace, $parent);
+            }
         }
     }
 }

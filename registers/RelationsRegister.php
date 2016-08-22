@@ -2,6 +2,7 @@
 
 namespace Wame\ChameleonComponentsDoctrine\Registers;
 
+use ArrayIterator;
 use Nette\InvalidArgumentException;
 use stdClass;
 use Wame\ChameleonComponents\Definition\DataDefinitionTarget;
@@ -34,18 +35,11 @@ class RelationsRegister implements IRegister
             throw new InvalidArgumentException("Invalid type, has to be IRelation.");
         }
 
-        $sd = $this->getServiceDefinition($relation->getFrom(), $relation->getTo());
-
-        if ($sd->name) {
-            throw new InvalidArgumentException("Relation for types {$relation->getFrom()->getType()}({$relation->getFrom()->isList()}) and {$relation->getTo()->getType()}({$relation->getTo()->isList()}) is already defined.");
-        }
+        $this->addRelation($relation->getFrom(), $relation->getTo(), $relation);
 
         if (!$name) {
             $name = get_class($relation);
         }
-
-        $sd->name = $name;
-        $sd->relation = $relation;
 
         $this->relationsNames[$name] = $relation;
     }
@@ -61,11 +55,14 @@ class RelationsRegister implements IRegister
             $relation = array_search($relation, $this->relationsNames);
         }
 
-        $sd = $this->getServiceDefinition($relation->getFrom(), $relation->getTo());
-        $name = $sd->name;
-        $sd->name = null;
-        $sd->relation = null;
-        unset($this->relationsNames[$name]);
+        $relations = $this->getServiceDefinitions($relation->getFrom(), $relation->getTo());
+        if ($relations) {
+            $key1 = $this->getListsKey($relation->getFrom(), $relation->getTo());
+            $key2 = array_search($relation, $relations);
+            unset($this->relations[$key1][$relation->getFrom()->getType()][$relation->getTo()->getType()][$key2]);
+            $key3 = array_search($relation, $this->relationsNames);
+            unset($this->relationsNames[$key3]);
+        }
     }
 
     /**
@@ -98,10 +95,71 @@ class RelationsRegister implements IRegister
      * @param DataDefinitionTarget $to
      * @return IRelation
      */
-    public function getByTarget(DataDefinitionTarget $from, DataDefinitionTarget $to)
+    public function getByTarget(DataDefinitionTarget $from, DataDefinitionTarget $to, $hint = null)
     {
-        $sd = $this->getServiceDefinition($from, $to);
-        return $sd->relation;
+        if ($hint && $hint instanceof IRelation) {
+            return $hint;
+        }
+
+        $relations = $this->getServiceDefinitions($from, $to);
+
+        if ($relations) {
+            if (count($relations) == 1) {
+                return $relations[0]->relation;
+            } else {
+
+                if (!$hint) {
+                    $e = new InvalidArgumentException("Control has multiple possible relations and no hint specified.");
+                    $e->relations = $relations;
+                    throw $e;
+                }
+
+                return $this->chooseRelationByHint($relations, $hint);
+            }
+        }
+    }
+
+    /**
+     * @param IRelation[] $relations
+     * @param string $hint
+     */
+    private function chooseRelationByHint($relations, $hint)
+    {
+        foreach($relations as $relation) {
+            if($relation->matchHint($hint)) {
+                return $relation;
+            }
+        }
+    }
+
+    /**
+     * @param DataDefinitionTarget $from
+     * @param DataDefinitionTarget $to
+     * @return stdClass[]
+     */
+    private function getServiceDefinitions(DataDefinitionTarget $from, DataDefinitionTarget $to)
+    {
+        $arr = $this->relations;
+
+        $key1 = 0;
+        $key1 += $from->isList() ? 1 : 0;
+        $key1 += $to->isList() ? 2 : 0;
+
+        if (!array_key_exists($key1, $arr)) {
+            return null;
+        }
+        $arr = $arr[$key1];
+
+        if (!array_key_exists($from->getType(), $arr)) {
+            return null;
+        }
+        $arr = $arr[$from->getType()];
+
+        if (!array_key_exists($to->getType(), $arr)) {
+            return null;
+        }
+
+        return $arr[$to->getType()];
     }
 
     /**
@@ -110,38 +168,34 @@ class RelationsRegister implements IRegister
      * @param DataDefinitionTarget $to
      * @return stdClass
      */
-    private function getServiceDefinition(DataDefinitionTarget $from, DataDefinitionTarget $to)
+    private function addRelation(DataDefinitionTarget $from, DataDefinitionTarget $to, $relation)
     {
         $arr = $this->relations;
 
         $key1 = 0;
         $key1 += $from->isList() ? 1 : 0;
         $key1 += $to->isList() ? 2 : 0;
-        
+
         if (!array_key_exists($key1, $arr)) {
-            $arr[$key1] = [];
+            $arr[$key1] = $this->relations[$key1] = [];
         }
         $arr = $arr[$key1];
 
         if (!array_key_exists($from->getType(), $arr)) {
-            $arr[$from->getType()] = [];
+            $arr[$from->getType()] = $this->relations[$key1][$from->getType()] = [];
         }
         $arr = $arr[$from->getType()];
 
         if (!array_key_exists($to->getType(), $arr)) {
-            $o = new stdClass();
-            $o->name = null;
-            $o->relation = null;
-            $arr[$to->getType()] = $o;
+            $arr[$to->getType()] = $this->relations[$key1][$from->getType()][$to->getType()] = [];
         }
-        $sd = $arr[$to->getType()];
 
-        return $sd;
+        $this->relations[$key1][$from->getType()][$to->getType()][] = $relation;
     }
 
     public function getIterator()
     {
-        return new \ArrayIterator($this->relationsNames);
+        return new ArrayIterator($this->relationsNames);
     }
 
     public function offsetExists($offset)

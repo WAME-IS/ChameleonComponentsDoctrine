@@ -71,4 +71,17 @@ class SimpleDoctrineRelation implements IRelation
         }
         return $alias;
     }
+
+    /**
+     * @param mixed $hint
+     * @return boolean
+     */
+    public function matchHint($hint)
+    {
+        if(is_string($hint)) {
+            if($hint == $this->fromField) {
+                return $hint;
+            }
+        }
+    }
 }
