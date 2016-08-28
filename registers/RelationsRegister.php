@@ -97,10 +97,6 @@ class RelationsRegister implements IRegister
      */
     public function getByTarget(DataDefinitionTarget $from, DataDefinitionTarget $to, $hint = null)
     {
-        if ($hint && $hint instanceof IRelation) {
-            return $hint;
-        }
-
         $relations = $this->getServiceDefinitions($from, $to);
 
         if ($relations) {

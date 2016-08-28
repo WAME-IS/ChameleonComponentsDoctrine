@@ -97,22 +97,59 @@ class QueryTypeSelect implements IQueryType
      */
     public function addRelations($dataSpace, $qb)
     {
+        $relationHint = $dataSpace->getDataDefinition()->getHint('relation');
+        $this->addRelationFromHint($relationHint, $dataSpace, $qb);
+        
         $parent = $dataSpace;
         while ($parent = $parent->getParent()) {
             
             $to = $parent->getDataDefinition()->getTarget();
             
-            $relationHint = $dataSpace->getDataDefinition()->getHint('relation');
             if(is_array($relationHint)) {
                 $relationHint = isset($relationHint[$to->getType()]) ? $relationHint[$to->getType()] : null;
-            } else {
-                $relationHint = null;
+            }
+            
+            if($relationHint && !is_string($relationHint)) {
+                continue;
             }
             
             $relation = $this->relationsRegister->getByTarget($dataSpace->getDataDefinition()->getTarget(), $to, $relationHint);
             
             if($relation) {
                 $relation->apply($qb, $dataSpace, $parent);
+            }
+        }
+    }
+    
+    /**
+     * @param DataSpace $dataSpace
+     * @param QueryBuilder $qb
+     */
+    private function addRelationFromHint($hint, $dataSpace, $qb) {
+        
+        if(is_array($hint)) {
+            foreach($hint as $h) {
+                $this->addRelationFromHint($h, $dataSpace, $qb);
+            }
+            return;
+        }
+        
+        if($hint instanceof IRelation) {
+            $hint->apply($qb, $dataSpace, $this->getChildDataSpaceByType($dataSpace, $hint->getTo()));
+        }
+    }
+    
+    /**
+     * @param DataSpace $dataSpace
+     * @param \Wame\ChameleonComponents\Definition\DataDefinitionTarget $target
+     */
+    private function getChildDataSpaceByType($dataSpace, $target)
+    {
+        $iterator = new RecursiveIteratorIterator(new RecursiveTreeDefinitionIterator([$dataSpace]), RecursiveIteratorIterator::SELF_FIRST);
+        
+        foreach($iterator as $dataSpace) {
+            if($dataSpace->getDataDefinition()->getTarget() == $target) {
+                return $dataSpace;
             }
         }
     }
