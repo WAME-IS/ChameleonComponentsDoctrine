@@ -30,7 +30,7 @@ class QueryTypeCountList implements IQueryType
     public function prepareCallback($dataSpace)
     {
         $selectDataSpace = $this->getSelectDataSpace($dataSpace);
-        $qb = $this->queryTypeSelect->prepareQuery($selectDataSpace);
+        list($qb, $usedRelations) = $this->queryTypeSelect->prepareQuery($selectDataSpace);
 
         $qb->select($qb->expr()->count($qb->getAllAliases()[0] . ".id"));
         $qb->setMaxResults(null);

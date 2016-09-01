@@ -48,7 +48,7 @@ class SimpleDoctrineRelation implements IRelation
     /**
      * @param QueryBuilder $qb
      */
-    public function apply(QueryBuilder $qb, $from, $to)
+    public function process(QueryBuilder $qb, $from, $to)
     {
         $type = $this->to->getType();
 
@@ -57,6 +57,16 @@ class SimpleDoctrineRelation implements IRelation
 
         $qb->innerJoin($type, $toAlias);
         $qb->where($fromAlias . "." . $this->fromField . ' = ' . $toAlias . "." . $this->toField);
+    }
+    
+    /**
+     * @param BaseEntity[] $result
+     * @param DataSpace $from
+     * @param DataSpace $to
+     */
+    public function postProcess(&$result, $from, $to)
+    {
+        
     }
 
     /**

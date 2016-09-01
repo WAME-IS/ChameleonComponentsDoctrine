@@ -14,8 +14,6 @@ use Wame\ChameleonComponentsDoctrine\Registers\Types\IQueryType;
 class DoctrineDataLoaderDriver implements IDataLoaderDriver
 {
 
-    const DEFAULT_QUERY_TYPE = 'select';
-
     /** @var QueryTypesRegister */
     private $queryTypesRegister;
 
@@ -54,7 +52,7 @@ class DoctrineDataLoaderDriver implements IDataLoaderDriver
     private function getQueryType($dataSpace)
     {
         $queryTypeName = $dataSpace->getDataDefinition()->getQueryType();
-        $queryType = $this->queryTypesRegister->getByName($queryTypeName ? : self::DEFAULT_QUERY_TYPE);
+        $queryType = $this->queryTypesRegister->getByName($queryTypeName);
         if (!$queryType) {
             throw new InvalidArgumentException("Query type with name $queryTypeName isn't supported");
         }

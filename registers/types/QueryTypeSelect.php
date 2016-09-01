@@ -10,6 +10,7 @@ use Wame\ChameleonComponents\Definition\DataDefinitionTarget;
 use Wame\ChameleonComponents\Definition\DataSpace;
 use Wame\ChameleonComponents\Definition\RecursiveTreeDefinitionIterator;
 use Wame\ChameleonComponentsDoctrine\Registers\RelationsRegister;
+use Wame\Core\Entities\BaseEntity;
 use Wame\Core\Registers\RepositoryRegister;
 use WebLoader\InvalidArgumentException;
 
@@ -33,15 +34,15 @@ class QueryTypeSelect implements IQueryType
      */
     public function prepareCallback($dataSpace)
     {
-        $qb = $this->prepareQuery($dataSpace);
+        list($qb, $usedRelations) = $this->prepareQuery($dataSpace);
         $query = $qb->getQuery();
         if ($dataSpace->getDataDefinition()->getTarget()->isList()) {
-            return function() use ($query) {
-                return $query->getResult();
+            return function() use ($query, $usedRelations) {
+                return $this->postProcessRelations($query->getResult(), $usedRelations);
             };
         } else {
-            return function() use ($query) {
-                return $query->setMaxResults(1)->getSingleResult();
+            return function() use ($query, $usedRelations) {
+                return $this->postProcessRelations($query->setMaxResults(1)->getSingleResult(), $usedRelations);
             };
         }
     }
@@ -61,9 +62,9 @@ class QueryTypeSelect implements IQueryType
 
             $this->buildQuery($dataSpace->getDataDefinition(), $qb);
             $this->addQueryHint($dataSpace, $qb);
-            $this->addRelations($dataSpace, $qb);
+            $relations = $this->addRelations($dataSpace, $qb);
 
-            return $qb;
+            return [$qb, $relations];
         } else {
             throw new InvalidArgumentException("Couldn't find repository for entity named {$target->getType()}");
         }
@@ -95,15 +96,16 @@ class QueryTypeSelect implements IQueryType
             $qb->setMaxResults(1);
         }
     }
-    
+
     /**
      * @param DataSpace $dataSpace
      * @param QueryBuilder $qb
      */
-    public function addQueryHint($dataSpace, $qb) {
+    public function addQueryHint($dataSpace, $qb)
+    {
         $query = $dataSpace->getDataDefinition()->getHint('query');
-        if($query) {
-            if(is_array($query)) {
+        if ($query) {
+            if (is_array($query)) {
                 foreach ($query as $q) {
                     call_user_func($q, $qb);
                 }
@@ -116,11 +118,14 @@ class QueryTypeSelect implements IQueryType
     /**
      * @param DataSpace $dataSpace
      * @param QueryBuilder $qb
+     * @return IRelation Added relations
      */
     public function addRelations($dataSpace, $qb)
     {
+        $addedRelations = [];
+
         $relationHint = $dataSpace->getDataDefinition()->getHint('relation');
-        $this->addRelationFromHint($relationHint, $dataSpace, $qb);
+        array_merge($addedRelations, $this->addRelationFromHint($relationHint, $dataSpace, $qb));
 
         $parent = $dataSpace;
         while ($parent = $parent->getParent()) {
@@ -138,21 +143,26 @@ class QueryTypeSelect implements IQueryType
             $relation = $this->relationsRegister->getByTarget($dataSpace->getDataDefinition()->getTarget(), $to, $relationHint);
 
             if ($relation) {
-                $relation->apply($qb, $dataSpace, $parent);
+                $relation->process($qb, $dataSpace, $parent);
+                $addedRelations[] = ['relation' => $relation, 'from' => $dataSpace, 'to' => $parent];
             }
         }
+
+        return $addedRelations;
     }
 
     /**
      * @param DataSpace $dataSpace
      * @param QueryBuilder $qb
+     * @return IRelation Added relations
      */
     private function addRelationFromHint($hint, $dataSpace, $qb)
     {
+        $addedRelations = [];
 
         if (is_array($hint)) {
             foreach ($hint as $h) {
-                $this->addRelationFromHint($h, $dataSpace, $qb);
+                array_merge($addedRelations, $this->addRelationFromHint($h, $dataSpace, $qb));
             }
             return;
         }
@@ -164,8 +174,11 @@ class QueryTypeSelect implements IQueryType
                 $e->hint = $hint;
                 throw $e;
             }
-            $hint->apply($qb, $dataSpace, $toDataSpace);
+            $hint->process($qb, $dataSpace, $toDataSpace);
+            $addedRelations[] = ['relation' => $hint, 'from' => $dataSpace, 'to' => $toDataSpace];
         }
+
+        return $addedRelations;
     }
 
     /**
@@ -181,5 +194,17 @@ class QueryTypeSelect implements IQueryType
                 return $dataSpace;
             }
         }
+    }
+
+    /**
+     * @param BaseEntity|BaseEntity[] $result
+     * @param IRelation[] $usedRelations
+     */
+    private function postProcessRelations($result, $usedRelations)
+    {
+        foreach($usedRelations as $usedRelation) {
+            $usedRelation['relation']->postProcess($result, $usedRelation['from'], $usedRelation['to']);
+        }
+        return $result;
     }
 }
