@@ -21,11 +21,12 @@ interface IRelation
     public function getTo();
 
     /**
-     * @param QueryBuilder $qb
+     * @param QueryBuilder $qb Query
      * @param DataSpace $from
      * @param DataSpace $to
+     * @param string $relationAlias Alias that should be used for relation
      */
-    public function process(QueryBuilder $qb, $from, $to);
+    public function process(QueryBuilder $qb, $from, $to, $relationAlias);
     
     /**
      * @param BaseEntity[] $result

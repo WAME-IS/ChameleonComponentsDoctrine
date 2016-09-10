@@ -2,17 +2,17 @@
 
 namespace Wame\ChameleonComponentsDoctrine\Registers\Types;
 
-use Kdyby\Doctrine\QueryBuilder;
-use Nette\InvalidArgumentException as InvalidArgumentException2;
-use RecursiveIteratorIterator;
+use Nette\InvalidArgumentException;
 use Wame\ChameleonComponents\Definition\DataDefinition;
 use Wame\ChameleonComponents\Definition\DataDefinitionTarget;
 use Wame\ChameleonComponents\Definition\DataSpace;
-use Wame\ChameleonComponents\Definition\RecursiveTreeDefinitionIterator;
 use Wame\ChameleonComponentsDoctrine\Registers\RelationsRegister;
+use Wame\ChameleonComponentsDoctrine\Registers\Types\IRelation;
+use Wame\ChameleonComponentsDoctrine\Utils\AliasGenerator;
+use Wame\ChameleonComponentsDoctrine\Utils\Utils;
 use Wame\Core\Entities\BaseEntity;
 use Wame\Core\Registers\RepositoryRegister;
-use WebLoader\InvalidArgumentException;
+use Wame\ListControlModule\Models\QueryBuilder;
 
 class QueryTypeSelect implements IQueryType
 {
@@ -123,27 +123,43 @@ class QueryTypeSelect implements IQueryType
     public function addRelations($dataSpace, $qb)
     {
         $addedRelations = [];
+        $relationsHint = $dataSpace->getDataDefinition()->getHint('relations');
+        $aliasGenerator = new AliasGenerator($qb);
 
-        $relationHint = $dataSpace->getDataDefinition()->getHint('relation');
-        array_merge($addedRelations, $this->addRelationFromHint($relationHint, $dataSpace, $qb));
+        /*
+         * Set relations
+         */
+        foreach ($dataSpace->getDataDefinition()->getRelations() as $target) {
+            $knownCriteria = $dataSpace->getDataDefinition()->getRelations()[$target];
 
+            $relation = $this->relationsRegister->getByTarget($dataSpace->getDataDefinition()->getTarget(), $target, $this->findHint($relationsHint, $target));
+
+            if (!$relation) {
+                $e = new InvalidArgumentException("Could not find relation.");
+                $e->from = $dataSpace->getDataDefinition()->getTarget();
+                $e->to = $target;
+                throw $e;
+            }
+
+            $alias = $aliasGenerator->getAlias($target->getType());
+            $relation->process($qb, $dataSpace, null, $alias);
+            $qb->addCriteria(Utils::prefixCriteria($knownCriteria, $alias));
+            $addedRelations[] = ['relation' => $relation, 'from' => $dataSpace, 'to' => null];
+        }
+
+        /*
+         * Parent relations
+         */
         $parent = $dataSpace;
         while ($parent = $parent->getParent()) {
 
             $to = $parent->getDataDefinition()->getTarget();
 
-            if (is_array($relationHint)) {
-                $relationHint = isset($relationHint[$to->getType()]) ? $relationHint[$to->getType()] : null;
-            }
-
-            if ($relationHint && !is_string($relationHint)) {
-                continue;
-            }
-
-            $relation = $this->relationsRegister->getByTarget($dataSpace->getDataDefinition()->getTarget(), $to, $relationHint);
+            $relation = $this->relationsRegister->getByTarget($dataSpace->getDataDefinition()->getTarget(), $to, $this->findHint($relationsHint, $to));
 
             if ($relation) {
-                $relation->process($qb, $dataSpace, $parent);
+                $alias = $aliasGenerator->getAlias($to->getType());
+                $relation->process($qb, $dataSpace, $parent, $alias);
                 $addedRelations[] = ['relation' => $relation, 'from' => $dataSpace, 'to' => $parent];
             }
         }
@@ -152,47 +168,20 @@ class QueryTypeSelect implements IQueryType
     }
 
     /**
-     * @param DataSpace $dataSpace
-     * @param QueryBuilder $qb
-     * @return IRelation Added relations
+     * 
+     * @param array $relationsHint
+     * @param DataDefinitionTarget $target
+     * @return string
      */
-    private function addRelationFromHint($hint, $dataSpace, $qb)
+    private function findHint($relationsHint, $target)
     {
-        $addedRelations = [];
-
-        if (is_array($hint)) {
-            foreach ($hint as $h) {
-                array_merge($addedRelations, $this->addRelationFromHint($h, $dataSpace, $qb));
-            }
-            return;
-        }
-
-        if ($hint instanceof IRelation) {
-            $toDataSpace = $this->getChildDataSpaceByType($dataSpace, $hint->getTo());
-            if ($toDataSpace) {
-                $e = new InvalidArgumentException2("No DataSpace for hinted relation found.");
-                $e->hint = $hint;
+        if ($relationsHint) {
+            if (!is_array($relationsHint)) {
+                $e = new InvalidArgumentException("Relations hint has to be associative array.");
+                $e->hint = $relationsHint;
                 throw $e;
             }
-            $hint->process($qb, $dataSpace, $toDataSpace);
-            $addedRelations[] = ['relation' => $hint, 'from' => $dataSpace, 'to' => $toDataSpace];
-        }
-
-        return $addedRelations;
-    }
-
-    /**
-     * @param DataSpace $dataSpace
-     * @param DataDefinitionTarget $target
-     */
-    private function getChildDataSpaceByType($dataSpace, $target)
-    {
-        $iterator = new RecursiveIteratorIterator(new RecursiveTreeDefinitionIterator([$dataSpace]), RecursiveIteratorIterator::SELF_FIRST);
-
-        foreach ($iterator as $dataSpace) {
-            if ($dataSpace->getDataDefinition()->getTarget() == $target) {
-                return $dataSpace;
-            }
+            return isset($relationsHint[$target->getType()]) ? : null;
         }
     }
 
@@ -202,7 +191,7 @@ class QueryTypeSelect implements IQueryType
      */
     private function postProcessRelations($result, $usedRelations)
     {
-        foreach($usedRelations as $usedRelation) {
+        foreach ($usedRelations as $usedRelation) {
             $usedRelation['relation']->postProcess($result, $usedRelation['from'], $usedRelation['to']);
         }
         return $result;

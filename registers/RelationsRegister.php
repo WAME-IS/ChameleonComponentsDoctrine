@@ -145,7 +145,7 @@ class RelationsRegister implements IRegister
             return null;
         }
         $arr = $arr[$key1];
-
+        
         if (!array_key_exists($from->getType(), $arr)) {
             return null;
         }

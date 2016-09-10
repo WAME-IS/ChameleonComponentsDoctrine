@@ -4,7 +4,8 @@ namespace Wame\ChameleonComponentsDoctrine\Registers\Types;
 
 use Kdyby\Doctrine\QueryBuilder;
 use Wame\ChameleonComponents\Definition\DataDefinitionTarget;
-use Wame\Utils\Strings;
+use Wame\ChameleonComponents\Definition\DataSpace;
+use Wame\Core\Entities\BaseEntity;
 
 class SimpleDoctrineRelation implements IRelation
 {
@@ -48,15 +49,14 @@ class SimpleDoctrineRelation implements IRelation
     /**
      * @param QueryBuilder $qb
      */
-    public function process(QueryBuilder $qb, $from, $to)
+    public function process(QueryBuilder $qb, $from, $to, $relationAlias)
     {
         $type = $this->to->getType();
 
         $fromAlias = $qb->getRootAliases()[0];
-        $toAlias = $this->generateAlias($type);
 
-        $qb->innerJoin($type, $toAlias);
-        $qb->where($fromAlias . "." . $this->fromField . ' = ' . $toAlias . "." . $this->toField);
+        $qb->innerJoin($type, $relationAlias);
+        $qb->where($fromAlias . "." . $this->fromField . ' = ' . $relationAlias . "." . $this->toField);
     }
     
     /**
@@ -68,20 +68,7 @@ class SimpleDoctrineRelation implements IRelation
     {
         
     }
-
-    /**
-     * @param string $type
-     * @return string
-     */
-    private function generateAlias($type)
-    {
-        $alias = Strings::lower(Strings::getClassName($type));
-        if (Strings::endsWith($alias, 'entity')) {
-            $alias = substr($alias, 0, -6);
-        }
-        return $alias;
-    }
-
+    
     /**
      * @param mixed $hint
      * @return boolean
