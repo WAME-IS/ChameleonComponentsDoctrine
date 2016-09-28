@@ -2,6 +2,7 @@
 
 namespace Wame\ChameleonComponentsDoctrine\Registers\Types;
 
+use Kdyby\Doctrine\QueryBuilder;
 use Nette\InvalidArgumentException;
 use Wame\ChameleonComponents\Definition\DataDefinition;
 use Wame\ChameleonComponents\Definition\DataDefinitionTarget;
@@ -12,7 +13,6 @@ use Wame\ChameleonComponentsDoctrine\Utils\AliasGenerator;
 use Wame\ChameleonComponentsDoctrine\Utils\Utils;
 use Wame\Core\Entities\BaseEntity;
 use Wame\Core\Registers\RepositoryRegister;
-use Wame\ListControlModule\Models\QueryBuilder;
 
 class QueryTypeSelect implements IQueryType
 {
