@@ -42,7 +42,7 @@ class QueryTypeSelect implements IQueryType
             };
         } else {
             return function() use ($query, $usedRelations) {
-                return $this->postProcessRelations($query->setMaxResults(1)->getSingleResult(), $usedRelations);
+                return $this->postProcessRelations($query->setMaxResults(1)->getOneOrNullResult(), $usedRelations);
             };
         }
     }
