@@ -13,20 +13,26 @@ use Wame\ChameleonComponentsDoctrine\Utils\AliasGenerator;
 use Wame\ChameleonComponentsDoctrine\Utils\Utils;
 use Wame\Core\Entities\BaseEntity;
 use Wame\Core\Registers\RepositoryRegister;
+use Wame\ChameleonComponents\Registers\QueryTypesRegister;
+
 
 class QueryTypeSelect implements IQueryType
 {
-
     /** @var RepositoryRegister */
     private $repositoryRegister;
 
     /** @var RelationsRegister */
     private $relationsRegister;
+    
+    /** @var QueryTypesRegister */
+    private $queryTypesRegister;
 
-    public function __construct(RepositoryRegister $repositoryRegister, RelationsRegister $relationsRegister)
+
+    public function __construct(RepositoryRegister $repositoryRegister, RelationsRegister $relationsRegister, QueryTypesRegister $queryTypesRegister)
     {
         $this->repositoryRegister = $repositoryRegister;
         $this->relationsRegister = $relationsRegister;
+        $this->queryTypesRegister = $queryTypesRegister;
     }
 
     /**
@@ -36,6 +42,14 @@ class QueryTypeSelect implements IQueryType
     {
         list($qb, $usedRelations) = $this->prepareQuery($dataSpace);
         $query = $qb->getQuery();
+        
+        /******************************************************************r.g*/
+        $statusName = $this->getStatusName($dataSpace);
+        $dataSpace->getControl()->getStatus()->set($statusName . '-qb', $qb);
+        /**************************************************************end*r.g*/
+
+
+                
         if ($dataSpace->getDataDefinition()->getTarget()->isList()) {
             return function() use ($query, $usedRelations) {
                 return $this->postProcessRelations($query->getResult(), $usedRelations);
@@ -196,4 +210,24 @@ class QueryTypeSelect implements IQueryType
         }
         return $result;
     }
+    
+    
+    /**********************************************************************r.g*/
+    /**
+     * @param DataSpace $dataSpace
+     * @return string
+     * @throws InvalidArgumentException
+     */
+    private function getStatusName($dataSpace)
+    {
+        $qtn = $dataSpace->getDataDefinition()->getQueryType();
+        $qt = $this->queryTypesRegister->getByName($qtn);
+        if ($qt) {
+            return $qt->getStatusName($dataSpace);
+        } else {
+            throw new InvalidArgumentException("Invalid queryType $qtn.");
+        }
+    }
+    /******************************************************************end*r.g*/
+    
 }
