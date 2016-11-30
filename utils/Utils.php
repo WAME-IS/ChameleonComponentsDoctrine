@@ -21,7 +21,16 @@ class Utils
         $visitor = new MapExpressionVisitor(function($field)use($prefix) {
             return $prefix . '.' . $field;
         });
-        $visitor->dispatch($criteria->getWhereExpression());
+        
+        /******************************************************************r.g*/
+        
+        $where = $criteria->getWhereExpression();
+        
+        if($where) {
+            $visitor->dispatch($where);
+        }
+        
+        /**************************************************************end*r.g*/
 
         return $criteria;
     }
