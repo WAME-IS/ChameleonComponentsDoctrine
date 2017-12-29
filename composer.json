@@ -1,5 +1,5 @@
 {
-    "name": "wameis/ChameleonComponentsDoctrine",
+    "name": "wame/ChameleonComponentsDoctrine",
     "version": "0.0.1",
     "description": "ChameleonComponentsDoctrine",
     "homepage": "http://wame.sk/cms-wame-admin",
@@ -10,8 +10,8 @@
         }
     ],
     "require": {
-        "wameis/ChameleonComponents": "*",
-        "wameis/Core": "*"
+        "wame/ChameleonComponents": "*",
+        "wame/Core": "*"
     },
     "autoload": {
         "classmap": [
