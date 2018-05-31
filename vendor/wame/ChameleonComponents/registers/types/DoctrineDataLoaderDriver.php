@@ -53,9 +53,11 @@ class DoctrineDataLoaderDriver implements IDataLoaderDriver
     {
         $queryTypeName = $dataSpace->getDataDefinition()->getQueryType();
         $queryType = $this->queryTypesRegister->getByName($queryTypeName);
+
         if (!$queryType) {
             throw new InvalidArgumentException("Query type with name $queryTypeName isn't supported");
         }
+
         return $queryType;
     }
 }

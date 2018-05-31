@@ -71,6 +71,7 @@ class QueryTypeSelect implements IQueryType
     {
         $target = $dataSpace->getDataDefinition()->getTarget();
         $repository = $this->repositoryRegister->getByName($target->getType());
+
         if ($repository) {
             $qb = $repository->createQueryBuilder();
 
@@ -90,6 +91,9 @@ class QueryTypeSelect implements IQueryType
     public function canPrepare($dataSpace)
     {
         $target = $dataSpace->getDataDefinition()->getTarget();
+
+        if ($target->getType() == '*') return true;
+
         return boolval($this->repositoryRegister->getByName($target->getType()));
     }
 
